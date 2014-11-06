@@ -102,7 +102,7 @@ def getCourse(crn)
 end
 
 #Registers you for the given CRN, returns true if successful, false if not
-def registerCrn(crn, remove)
+def registerCrn(crn, remove, &failedAdds)
 	begin
 		#Follow Path
 		$agent.get("https://banweb.banner.vt.edu/ssb/prod/twbkwbis.P_GenMenu?name=bmenu.P_MainMnu")
@@ -146,6 +146,7 @@ def registerCrn(crn, remove)
 	end
 
 	if add =~ /#{crn}/ && !(add =~ /Registration Errors/) then
+    failedAdds = 0
 		return true
 	else
 		# If the new class is not successfully added and a class was dropped to make room, then re-adds the old class
@@ -160,6 +161,12 @@ def registerCrn(crn, remove)
 			end
 			puts 're-registered'
 		end
+    
+    failedAdds += 1
+    if failedAdds == 3 then
+      raise 'CRN #{crn} was unsuccessfully added 3 times'
+    end
+    
 		return false
 	end
 end
@@ -168,6 +175,7 @@ end
 def checkCourses(courses)
 
 	requestCount = 0
+  failedAdds = 0
 	startTime = Time.new
 	successes = [] 
 	loop do
@@ -193,7 +201,7 @@ def checkCourses(courses)
 
 			if (course[:seats] =~ /Full/) then
 			else 
-				if (registerCrn(c[:crn], c[:remove])) then
+				if (registerCrn(c[:crn], c[:remove], failedAdds)) then
 					puts "CRN #{c[:crn]} Registration Successful"
 					# Tracks what CRNs have been added
 					successes.push(courses.slice!(i))
