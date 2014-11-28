@@ -10,6 +10,7 @@ $term = '01'
 $year = '2015'
 $frequency = 1  #Number of Seconds between check requests
 $name = ''
+$failedAdds = 0
 
 $agent = Mechanize.new
 $agent.redirect_ok = true 
@@ -142,6 +143,7 @@ def registerCrn(crn, remove)
 		# Does not crash if Drop/Add is not open yet
 		# # Useful if you want it to be running right when it opens
 		puts "Drop Add not open yet".color(:red)
+    $failedAdds = 0
 		return false
 	end
 
@@ -169,7 +171,7 @@ end
 def checkCourses(courses)
 
 	requestCount = 0
-  failedAdds = 0
+  $failedAdds = 0
 	startTime = Time.new
 	successes = [] 
 	loop do
@@ -201,13 +203,13 @@ def checkCourses(courses)
 					# Tracks what CRNs have been added
 					successes.push(courses.slice!(i))
           # If the registration is successful than resets the failed counter
-          failedAdds = 0
+          $failedAdds = 0
 				else
 					puts "Couldn't Register"
           
-          failedAdds += 1
-          if failedAdds == 3 then
-            raise 'CRN #{crn} was unsuccessfully added 3 times'
+          $failedAdds += 1
+          if $failedAdds == 3 then
+            raise "CRN #{c[:crn]} was unsuccessfully added 3 times"
           end
 				end
 
@@ -228,7 +230,7 @@ def checkCourses(courses)
 
 		# When they are done adding returns true so the
 		if courses.size == 0
-		puts "All classes added".color(:yellow)
+		  puts "All classes added".color(:yellow)
 			return true
 		end
 		
