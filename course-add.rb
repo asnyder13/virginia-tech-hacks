@@ -202,6 +202,8 @@ def checkCourses(courses)
 					puts "CRN #{c[:crn]} Registration Successful"
 					# Tracks what CRNs have been added
 					successes.push(courses.slice!(i))
+          # Remove classes with the same title
+          courses.delete_if { |x| x[:title] == successes.last[:title] }
           # If the registration is successful than resets the failed counter
           $failedAdds = 0
 				else
