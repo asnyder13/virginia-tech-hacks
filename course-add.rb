@@ -6,7 +6,7 @@ require 'highline/import'
 require 'stringio'
 
 #Change based on Semester
-$term = '01'
+$term = '09'
 $year = '2015'
 $frequency = 1  #Number of Seconds between check requests
 $name = ''
