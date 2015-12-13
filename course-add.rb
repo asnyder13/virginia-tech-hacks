@@ -13,22 +13,22 @@ $name = ''
 $failed_adds = 0
 
 $agent = Mechanize.new
-$agent.redirect_ok = true 
+$agent.redirect_ok = true
 $agent.user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.11 Safari/535.19"
 $agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
 #Uber simway to colorize outputin
 class String
   def color(c)
-    colors = { 
-      :black   => 30, 
-      :red     => 31, 
-      :green   => 32, 
-      :yellow  => 33, 
-      :blue    => 34, 
-      :magenta => 35, 
-      :cyan    => 36, 
-      :white   => 37 
+    colors = {
+      :black   => 30,
+      :red     => 31,
+      :green   => 32,
+      :yellow  => 33,
+      :blue    => 34,
+      :magenta => 35,
+      :cyan    => 36,
+      :white   => 37
     }
     return "\e[#{colors[c] || c}m#{self}\e[0m"
   end
@@ -41,7 +41,7 @@ def login(username, password)
   page = $agent.get("https://auth.vt.edu/login?service=https://webapps.banner.vt.edu/banner-cas-prod/authorized/banner/SelfService")
   login = page.forms.first
   login.set_fields({
-    :username => username, 
+    :username => username,
     :password => password
   })
   if (login.submit().body.match(/Invalid username or password/)) then
@@ -52,7 +52,7 @@ def login(username, password)
 end
 
 #Gets Course Information
-def getCourse(crn)  
+def getCourse(crn)
   begin
     course_details = Nokogiri::HTML( $agent.get("https://banweb.banner.vt.edu/ssb/prod/HZSKVTSC.P_ProcComments?CRN=#{crn}&TERM=#{$term}&YEAR=#{$year}").body)
   rescue
@@ -109,12 +109,12 @@ def registerCrn(crn, remove)
     $agent.get("https://banweb.banner.vt.edu/ssb/prod/twbkwbis.P_GenMenu?name=bmenu.P_MainMnu")
     reg = $agent.get("https://banweb.banner.vt.edu/ssb/prod/hzskstat.P_DispRegStatPage")
     drop_add = reg.link_with(:href => "/ssb/prod/bwskfreg.P_AddDropCrse?term_in=#{$year}#{$term}").click
-    
+
     #Fill in CRN Box and Submit
     crn_entry = drop_add.form_with(:action => '/ssb/prod/bwckcoms.P_Regs')
-    
+
     drop_add_html = Nokogiri::HTML(drop_add.body)
-    
+
     # Removing the old class if one was specified
     # Counter to keep track of empty rows
     # # Starts at -2 because counter was picking up the rows before the first class and I needed it to be
@@ -128,14 +128,14 @@ def registerCrn(crn, remove)
             # Changes the drop down for the 'Drop' column for the CRN
             crn_entry.field_with(:id => "action_id#{i - 3 - counter}").options[0].select
           elsif row.css('td')[1].text =~ /^\d{5}$/ then
-          
+
           else
             counter += 1  # Counts how many 'empty' rows there are, ex. a class with additional times
           end
         end
       end
     end
-    
+
     crn_entry.fields_with(:id => 'crn_id1').first.value = crn
     crn_entry['CRN_IN'] = crn
     add = crn_entry.submit(crn_entry.button_with(:value => 'Submit Changes')).body
@@ -162,7 +162,7 @@ def registerCrn(crn, remove)
       end
       puts 're-registered'
     end
-    
+
     return false
   end
 end
@@ -173,7 +173,7 @@ def checkCourses(courses)
   request_count = 0
   $failed_adds = 0
   time_start = Time.new
-  successes = [] 
+  successes = []
   loop do
     system("clear")
 
@@ -189,15 +189,15 @@ def checkCourses(courses)
 
     courses.each_with_index do |c, i|
 
-      puts "#{c[:crn]} - #{c[:title]}".color(:blue) 
-      course = getCourse(c[:crn])  
+      puts "#{c[:crn]} - #{c[:title]}".color(:blue)
+      course = getCourse(c[:crn])
       next unless course #If throws error
 
       puts "Availability: #{course[:seats]} / #{course[:capacity]}".color(:red)
 
       if (course[:seats] =~ /Full/) then
       # If course is full, do nothing
-      else 
+      else
         if (registerCrn(c[:crn], c[:remove])) then
           puts "CRN #{c[:crn]} Registration Successful"
           # Tracks what CRNs have been added
@@ -208,7 +208,7 @@ def checkCourses(courses)
           $failed_adds = 0
         else
           puts "Couldn't Register"
-          
+
           $failed_adds += 1
           if $failed_adds == 3 then
             raise "CRN #{c[:crn]} was unsuccessfully added 3 times"
@@ -216,17 +216,17 @@ def checkCourses(courses)
         end
 
       end
-      
+
       print "\n\n"
     end
-    
+
     # Lists the CRNs that have been added so far
     if successes.length > 0
       puts "These CRNs have been added successfully: ".color(:magenta)
       successes.each_with_index do |added,i|
         puts "#{i+1}: #{added[:crn]} - #{added[:title]}".color(:cyan)
       end
-      
+
       puts "\n"
     end
 
@@ -235,16 +235,16 @@ def checkCourses(courses)
       puts "All classes added".color(:yellow)
       return true
     end
-    
+
     sleep $frequency
   end
 end
 
 #Add courses to be checked
-def addCourses 
+def addCourses
   crns = []
 
-  loop do 
+  loop do
     system("clear")
     puts "Your CRNs:".color(:red)
     crns.each do |crn|
@@ -255,10 +255,10 @@ def addCourses
     alt = (crns.length > 0)  ? " (or just type 'start') " : " "
     input = ask("\nEnter a CRN to add it#{alt}".color(:green) + ":: ") { |q| q.echo = true }
 
-    #Validate CRN to be 5 Digits 
+    #Validate CRN to be 5 Digits
     if (input =~ /^\d{5}$/) then
       remove_loop = true
-      
+
       # Asks if a class needs to be taken out beforehand
       while remove_loop
         remove = ask("\nDoes another CRN need to be removed? (yes/no) ".color(:blue)) {|q| q.echo = true}
@@ -272,7 +272,7 @@ def addCourses
           remove_loop = false
         end
       end
-      
+
       system("clear")
       #Display CRN Info
       c = getCourse(input.to_s)
@@ -283,12 +283,12 @@ def addCourses
       puts "--> Type: #{c[:type]} || Status: #{c[:status]}".color(:cyan)
       puts "--> Availability: #{c[:seats]} / #{c[:capacity]}".color(:cyan)
       puts "--> CRN to Remove: #{c[:remove]}\n".color(:cyan)
-    
+
 
       #Add Class Prompt
       add = ask("Add This Class? (yes/no)".color(:yellow) + ":: ") { |q| q.echo = true }
       crns.push(c) if (add =~ /yes/)
-      
+
     elsif (input == "start") then
       # When all courses have been added the program ends
       if checkCourses(crns)
@@ -304,7 +304,7 @@ end
 def main
   system("clear")
   puts "Welcome to BannerStalker".color(:blue)
-  
+
   attempting_login = true
   while attempting_login
     $name = ask("Name ".color(:green) + ":: ") {|q| q.echo = true}
