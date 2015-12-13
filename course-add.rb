@@ -5,10 +5,10 @@ require 'nokogiri'
 require 'highline/import'
 require 'stringio'
 
-#Change based on Semester
+# Change based on Semester
 $term = '01'
 $year = '2016'
-$frequency = 1  #Number of Seconds between check requests
+$frequency = 1  # Number of Seconds between check requests
 $name = ''
 $failed_adds = 0
 
@@ -17,32 +17,32 @@ $agent.redirect_ok = true
 $agent.user_agent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.11 Safari/535.19"
 $agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
-#Uber simway to colorize outputin
+# Uber simway to colorize outputin
 class String
   def color(c)
     colors = {
-      :black   => 30,
-      :red     => 31,
-      :green   => 32,
-      :yellow  => 33,
-      :blue    => 34,
-      :magenta => 35,
-      :cyan    => 36,
-      :white   => 37
+      black:   30,
+      red:     31,
+      green:   32,
+      yellow:  33,
+      blue:    34,
+      magenta: 35,
+      cyan:    36,
+      white:   37
     }
     return "\e[#{colors[c] || c}m#{self}\e[0m"
   end
 end
 
-#Logins, Gets the Courses, Returns Courses Obj with Name/URL/Tools for each
+# Logins, Gets the Courses, Returns Courses Obj with Name/URL/Tools for each
 def login(username, password)
 
-  #Login to the system!
+  # Login to the system!
   page = $agent.get("https://auth.vt.edu/login?service=https://webapps.banner.vt.edu/banner-cas-prod/authorized/banner/SelfService")
   login = page.forms.first
   login.set_fields({
-    :username => username,
-    :password => password
+    username: username,
+    password: password
   })
   if (login.submit().body.match(/Invalid username or password/)) then
     return false
@@ -51,15 +51,15 @@ def login(username, password)
   end
 end
 
-#Gets Course Information
+# Gets Course Information
 def getCourse(crn)
   begin
     course_details = Nokogiri::HTML( $agent.get("https://banweb.banner.vt.edu/ssb/prod/HZSKVTSC.P_ProcComments?CRN=#{crn}&TERM=#{$term}&YEAR=#{$year}").body)
   rescue
-    return false #Failed to get course
+    return false # Failed to get course
   end
 
-  #Flatten table to make it easier to work with
+  # Flatten table to make it easier to work with
   course = {}
   data_set = false
 
@@ -70,7 +70,7 @@ def getCourse(crn)
   # # Got a couple exceptions where it was trying to get the text of a null object
   begin
     course_details.css('table table tr').each_with_index do |row|
-      #If we have a data_set
+      # If we have a data_set
       case data_set
         when :rowA
           [ :i, :days, :begin, :end, :room, :exam].each_with_index do |el, i|
@@ -85,7 +85,7 @@ def getCourse(crn)
       end
 
       data_set = false
-      #Is there a dataset?
+      # Is there a dataset?
       row.css('td').each do |cell|
         case cell.text
           when "Days"
@@ -102,15 +102,15 @@ def getCourse(crn)
   return course
 end
 
-#Registers you for the given CRN, returns true if successful, false if not
+# Registers you for the given CRN, returns true if successful, false if not
 def registerCrn(crn, remove)
   begin
-    #Follow Path
+    # Follow Path
     $agent.get("https://banweb.banner.vt.edu/ssb/prod/twbkwbis.P_GenMenu?name=bmenu.P_MainMnu")
     reg = $agent.get("https://banweb.banner.vt.edu/ssb/prod/hzskstat.P_DispRegStatPage")
     drop_add = reg.link_with(:href => "/ssb/prod/bwskfreg.P_AddDropCrse?term_in=#{$year}#{$term}").click
 
-    #Fill in CRN Box and Submit
+    # Fill in CRN Box and Submit
     crn_entry = drop_add.form_with(:action => '/ssb/prod/bwckcoms.P_Regs')
 
     drop_add_html = Nokogiri::HTML(drop_add.body)
@@ -167,7 +167,7 @@ def registerCrn(crn, remove)
   end
 end
 
-#MAIN LOOP that checks the availability of each courses and fires to registerCrn on availability
+# MAIN LOOP that checks the availability of each courses and fires to registerCrn on availability
 def checkCourses(courses)
 
   request_count = 0
@@ -191,7 +191,7 @@ def checkCourses(courses)
 
       puts "#{c[:crn]} - #{c[:title]}".color(:blue)
       course = getCourse(c[:crn])
-      next unless course #If throws error
+      next unless course # If throws error
 
       puts "Availability: #{course[:seats]} / #{course[:capacity]}".color(:red)
 
@@ -240,7 +240,7 @@ def checkCourses(courses)
   end
 end
 
-#Add courses to be checked
+# Add courses to be checked
 def addCourses
   crns = []
 
@@ -251,11 +251,11 @@ def addCourses
       puts "  -> #{crn[:title]} (CRN: #{crn[:crn]})".color(:magenta)
     end
 
-    #Prompt for CRN
+    # Prompt for CRN
     alt = (crns.length > 0)  ? " (or just type 'start') " : " "
     input = ask("\nEnter a CRN to add it#{alt}".color(:green) + ":: ") { |q| q.echo = true }
 
-    #Validate CRN to be 5 Digits
+    # Validate CRN to be 5 Digits
     if (input =~ /^\d{5}$/) then
       remove_loop = true
 
@@ -274,7 +274,7 @@ def addCourses
       end
 
       system("clear")
-      #Display CRN Info
+      # Display CRN Info
       c = getCourse(input.to_s)
       c[:remove] = crn_remove
       puts "\nCourse: #{c[:title]} - #{c[:crn]}".color(:red)
@@ -285,7 +285,7 @@ def addCourses
       puts "--> CRN to Remove: #{c[:remove]}\n".color(:cyan)
 
 
-      #Add Class Prompt
+      # Add Class Prompt
       add = ask("Add This Class? (yes/no)".color(:yellow) + ":: ") { |q| q.echo = true }
       crns.push(c) if (add =~ /yes/)
 
