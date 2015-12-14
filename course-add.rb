@@ -36,7 +36,6 @@ end
 
 # Logins, Gets the Courses, Returns Courses Obj with Name/URL/Tools for each
 def login(username, password)
-
   # Login to the system!
   page = $agent.get('https://auth.vt.edu/login?service=https://webapps.banner.vt.edu/banner-cas-prod/authorized/banner/SelfService')
   login = page.forms.first
@@ -44,7 +43,7 @@ def login(username, password)
     username: username,
     password: password
   })
-  if (login.submit.body.match(/Invalid username or password/)) then
+  if login.submit.body.match(/Invalid username or password/)
     return false
   else
     return true
@@ -74,12 +73,12 @@ def get_course(crn)
       case data_set
       when :rowA
         [:i, :days, :begin, :end, :room, :exam].each_with_index do |el, i|
-          if row.css('td')[i] then
+          if row.css('td')[i]
             course[el] = row.css('td')[i].text
           end
         end
       when :rowB
-        [ :instructor, :type, :status, :seats, :capacity ].each_with_index do |el, i|
+        [:instructor, :type, :status, :seats, :capacity].each_with_index do |el, i|
           course[el] = row.css('td')[i].text
         end
       end
@@ -147,7 +146,7 @@ def register_crn(crn, remove)
     return false
   end
 
-  if add =~ /#{crn}/ && !(add =~ /Registration Errors/) then
+  if add =~ /#{crn}/ && !(add =~ /Registration Errors/)
     return true
   else
     # If the new class is not successfully added and a class was dropped to make room, then re-adds the old class
@@ -169,7 +168,6 @@ end
 
 # MAIN LOOP that checks the availability of each courses and fires to register_crn on availability
 def check_courses(courses)
-
   request_count = 0
   $failed_adds = 0
   time_start = Time.new
@@ -188,7 +186,6 @@ def check_courses(courses)
     puts "--------------------------------\n\n"
 
     courses.each_with_index do |c, i|
-
       puts "#{c[:crn]} - #{c[:title]}".color(:blue)
       course = get_course(c[:crn])
       next unless course # If throws error
@@ -198,7 +195,7 @@ def check_courses(courses)
       if (course[:seats] =~ /Full/) then
       # If course is full, do nothing
       else
-        if (register_crn(c[:crn], c[:remove])) then
+        if register_crn(c[:crn], c[:remove])
           puts "CRN #{c[:crn]} Registration Successful"
           # Tracks what CRNs have been added
           successes.push(courses.slice!(i))
@@ -210,7 +207,7 @@ def check_courses(courses)
           puts 'Couldn\'t Register'
 
           $failed_adds += 1
-          if $failed_adds == 3 then
+          if $failed_adds == 3
             raise "CRN #{c[:crn]} was unsuccessfully added 3 times"
           end
         end
@@ -223,8 +220,8 @@ def check_courses(courses)
     # Lists the CRNs that have been added so far
     if successes.length > 0
       puts 'These CRNs have been added successfully: '.color(:magenta)
-      successes.each_with_index do |added,i|
-        puts "#{i+1}: #{added[:crn]} - #{added[:title]}".color(:cyan)
+      successes.each_with_index do |added, i|
+        puts "#{i + 1}: #{added[:crn]} - #{added[:title]}".color(:cyan)
       end
 
       puts "\n"
@@ -252,28 +249,28 @@ def add_courses
     end
 
     # Prompt for CRN
-    alt = (crns.length > 0)  ? ' (or just type \'start\') ' : ' '
-    input = ask("\nEnter a CRN to add it#{alt}".color(:green) + ":: ") { |q| q.echo = true }
+    alt = crns.length > 0 ? ' (or just type \'start\') ' : ' '
+    input = ask("\nEnter a CRN to add it#{alt}".color(:green) + ':: ') { |q| q.echo = true }
 
     # Validate CRN to be 5 Digits
-    if (input =~ /^\d{5}$/) then
+    if input =~ /^\d{5}$/
       remove_loop = true
 
       # Asks if a class needs to be taken out beforehand
       while remove_loop
-        remove = ask('Does another CRN need to be removed? (yes/no) '.color(:blue)) {|q| q.echo = true}
+        remove = ask('Does another CRN need to be removed? (yes/no) '.color(:blue)) { |q| q.echo = true }
         if remove =~ /yes/
-          crn_remove = ask('Enter the CRN: '.color(:green)) {|q| q.echo = true}
+          crn_remove = ask('Enter the CRN: '.color(:green)) { |q| q.echo = true }
           if crn_remove =~ /^\d{5}$/
             remove_loop = false
           end
         elsif remove =~ /no/
-          crn_remove = ""
+          crn_remove = ''
           remove_loop = false
         end
       end
 
-      system("clear")
+      system('clear')
       # Display CRN Info
       c = get_course(input.to_s)
       c[:remove] = crn_remove
@@ -284,12 +281,11 @@ def add_courses
       puts "--> Availability: #{c[:seats]} / #{c[:capacity]}".color(:cyan)
       puts "--> CRN to Remove: #{c[:remove]}\n".color(:cyan)
 
-
       # Add Class Prompt
       add = ask('Add This Class? (yes/no)'.color(:yellow) + ':: ') { |q| q.echo = true }
-      crns.push(c) if (add =~ /yes/)
+      crns.push(c) if add =~ /yes/
 
-    elsif (input == 'start') then
+    elsif input == 'start'
       # When all courses have been added the program ends
       if check_courses(crns)
         break
@@ -300,19 +296,18 @@ def add_courses
   end
 end
 
-
 def main
   system('clear')
   puts 'Welcome to BannerStalker'.color(:blue)
 
   attempting_login = true
   while attempting_login
-    $name = ask('Name '.color(:green) + ':: ') {|q| q.echo = true}
+    $name = ask('Name '.color(:green) + ':: ') { |q| q.echo = true }
     username = ask('PID '.color(:green) + ':: ') { |q| q.echo = true }
-    password = ask('Password '.color(:green) + ':: ' ) { |q| q.echo = '*' }
+    password = ask('Password '.color(:green) + ':: ') { |q| q.echo = '*' }
 
     system('clear')
-    if login(username, password) then
+    if login(username, password)
       attempting_login = false
       add_courses
     else
