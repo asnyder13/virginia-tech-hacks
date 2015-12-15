@@ -16,6 +16,10 @@ class HokieSPA
   
   # Logins, Gets the Courses, Returns Courses Obj with Name/URL/Tools for each
   def login(username, password)
+    if username.nil? || password.nil?
+      return false
+    end
+    
     # Login to the system!
     page = @agent.get('https://auth.vt.edu/login?service=https://webapps.banner.vt.edu/banner-cas-prod/authorized/banner/SelfService')
     login = page.forms.first

@@ -136,9 +136,7 @@ class ClassChecker
 
       elsif input == 'start'
         # When all courses have been added the program ends
-        if check_courses(crns)
-          break
-        end
+        return crns
       else
         puts 'Invalid CRN'
       end

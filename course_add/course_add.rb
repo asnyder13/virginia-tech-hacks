@@ -6,19 +6,19 @@ require_relative 'colored_string'
 system('clear')
 puts 'Welcome to BannerStalker'.color(:blue)
 
-attempting_login = true
-while attempting_login
-  name = ask('Name '.color(:green) + ':: ') { |q| q.echo = true }
+name = ask('Name '.color(:green) + ':: ') { |q| q.echo = true }
+course_checker = ClassChecker.new(name)
+
+loop do
   username = ask('PID '.color(:green) + ':: ') { |q| q.echo = true }
   password = ask('Password '.color(:green) + ':: ') { |q| q.echo = '*' }
 
-  course_checker = ClassChecker.new(name)
+  break if course_checker.login(username, password)
 
-  system('clear')
-  if course_checker.login(username, password)
-    attempting_login = false
-    course_checker.add_courses
-  else
-    puts 'Invalid PID/Password'.color(:red)
-  end
+  puts 'Invalid PID/Password'.color(:red)
 end
+
+system('clear')
+attempting_login = false
+crns = course_checker.add_courses
+course_checker.check_courses(crns)
