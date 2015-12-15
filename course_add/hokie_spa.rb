@@ -27,11 +27,8 @@ class HokieSPA
       username: username,
       password: password
     })
-    if login.submit.body.match(/Invalid username or password/)
-      return false
-    else
-      return true
-    end
+
+    login.submit.body.match(/Invalid username or password/).nil?
   end
 
   # Gets Course Information
@@ -140,7 +137,7 @@ class HokieSPA
         add = crn_entry.submit(crn_entry.button_with(value: 'Submit Changes')).body
         # If it can't re-add the old class it will then raise an exception
         if !(add =~ /#{remove}/) || add =~ /Registration Errors/
-          raise 'Well stuff messed up: dropped the class, new class didn\'t register, couldn\'t re-register old class'
+          raise 'Dropped the class, new class didn\'t register, couldn\'t re-register old class'
         end
         puts 're-registered'
       end

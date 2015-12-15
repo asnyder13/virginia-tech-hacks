@@ -103,20 +103,17 @@ class ClassChecker
 
       # Validate CRN to be 5 Digits
       if input =~ /^\d{5}$/
-        remove_loop = true
-
+        crn_remove = ''
         # Asks if a class needs to be taken out beforehand
-        while remove_loop
+        loop do
           remove = ask('Does another CRN need to be removed? (yes/no) '.color(:blue)) { |q| q.echo = true }
+
+          break if remove =~ /no/
           if remove =~ /yes/
             crn_remove = ask('Enter the CRN: '.color(:green)) { |q| q.echo = true }
-            if crn_remove =~ /^\d{5}$/
-              remove_loop = false
-            end
-          elsif remove =~ /no/
-            crn_remove = ''
-            remove_loop = false
           end
+
+          break if crn_remove =~ /^\d{5}$/
         end
 
         system('clear')
