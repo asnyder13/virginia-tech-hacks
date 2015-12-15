@@ -16,7 +16,7 @@ class HokieSPA
   
   # Logins, Gets the Courses, Returns Courses Obj with Name/URL/Tools for each
   def login(username, password)
-    if username.nil? || password.nil?
+    if username.nil? || username.empty? || password.nil? || password.empty?
       return false
     end
     
@@ -83,7 +83,7 @@ class HokieSPA
   end
 
   # Registers you for the given CRN, returns true if successful, false if not
-  def register_crn(crn, remove)
+  def register_crn(crn, remove = '')
     begin
       # Follow Path
       @agent.get('https://banweb.banner.vt.edu/ssb/prod/twbkwbis.P_GenMenu?name=bmenu.P_MainMnu')
@@ -92,28 +92,10 @@ class HokieSPA
 
       # Fill in CRN Box and Submit
       crn_entry = drop_add.form_with(action: '/ssb/prod/bwckcoms.P_Regs')
-
       drop_add_html = Nokogiri::HTML(drop_add.body)
 
-      # Removing the old class if one was specified
-      # Counter to keep track of empty rows
-      #   Starts at -2 because counter was picking up the rows before the first class and I needed it to be
-      #   accurate for troubleshooting
-      counter = -2
-      if remove != ''
-        drop_add_html.css('table table tr').each_with_index do |row, i|
-          # Looks down the table to find the row with the CRN that needs to be removed
-          if row.css('td')[1] != nil
-            if row.css('td')[1].text =~ /#{remove}/
-              # Changes the drop down for the 'Drop' column for the CRN
-              crn_entry.field_with(id: "action_id#{i - 3 - counter}").options[0].select
-            elsif row.css('td')[1].text =~ /^\d{5}$/ then
-
-            else
-              counter += 1  # Counts how many 'empty' rows there are, ex. a class with additional times
-            end
-          end
-        end
+      unless remove.empty?
+        flag_remove_crn(drop_add_html, crn_entry, remove)
       end
 
       crn_entry.fields_with(id: 'crn_id1').first.value = crn
@@ -143,6 +125,28 @@ class HokieSPA
       end
 
       return false
+    end
+  end
+
+  # Flips the 'drop' box from no to yes for the desired crn
+  def flag_remove_crn(drop_add_html, crn_entry, remove)
+    # Removing the old class if one was specified
+    # Counter to keep track of empty rows
+    #   Starts at -2 because counter was picking up the rows 
+    #   before the first class
+    offset = -2
+    drop_add_html.css('table table tr').each_with_index do |row, i|
+      # Looks down the table to find the row with the CRN that needs to be removed
+      if row.css('td')[1] != nil
+        if row.css('td')[1].text =~ /#{remove}/
+          # Changes the drop down for the 'Drop' column for the CRN
+          crn_entry.field_with(id: "action_id#{i - 3 - offset}").options[0].select
+        elsif row.css('td')[1].text =~ /^\d{5}$/ then
+
+        else
+          offset += 1  # Counts how many 'empty' rows there are, ex. a class with additional times
+        end
+      end
     end
   end
 end

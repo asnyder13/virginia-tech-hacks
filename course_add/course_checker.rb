@@ -38,9 +38,7 @@ class ClassChecker
 
         puts "Availability: #{course[:seats]} / #{course[:capacity]}".color(:red)
 
-        if (course[:seats] =~ /Full/) then
-        # If course is full, do nothing
-        else
+        unless course[:seats] =~ /Full/
           register_result = @hokie_spa.register_crn(c[:crn], c[:remove])
           if register_result == :closed
             failed_adds = 0;
