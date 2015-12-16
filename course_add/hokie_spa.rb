@@ -54,9 +54,7 @@ class HokieSPA
         case data_set
         when :rowA
           [:i, :days, :begin, :end, :room, :exam].each_with_index do |el, i|
-            if row.css('td')[i]
-              course[el] = row.css('td')[i].text
-            end
+            course[el] = row.css('td')[i] ? row.css('td')[i].text : ''
           end
         when :rowB
           [:instructor, :type, :status, :seats, :capacity].each_with_index do |el, i|
@@ -112,7 +110,7 @@ class HokieSPA
       return true
     else
       # If the new class is not successfully added and a class was dropped to make room, then re-adds the old class
-      if remove != ''
+      unless remove.empty?
         crn_entry = drop_add.form_with(action: '/ssb/prod/bwckcoms.P_Regs')
         crn_entry.fields_with(id: 'crn_id1').first.value = remove
         crn_entry['CRN_IN'] = remove
