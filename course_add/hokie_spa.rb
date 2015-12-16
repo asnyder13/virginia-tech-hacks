@@ -13,13 +13,13 @@ class HokieSPA
     @term = '01'
     @year = '2016'
   end
-  
+
   # Logins, Gets the Courses, Returns Courses Obj with Name/URL/Tools for each
   def login(username, password)
     if username.nil? || username.empty? || password.nil? || password.empty?
       return false
     end
-    
+
     # Login to the system!
     page = @agent.get('https://auth.vt.edu/login?service=https://webapps.banner.vt.edu/banner-cas-prod/authorized/banner/SelfService')
     login = page.forms.first
@@ -82,39 +82,21 @@ class HokieSPA
 
   # Registers you for the given CRN, returns true if successful, false if not
   def register_crn(crn, remove = '')
-    begin
-      # Follow Path
-      @agent.get('https://banweb.banner.vt.edu/ssb/prod/twbkwbis.P_GenMenu?name=bmenu.P_MainMnu')
-      reg = @agent.get('https://banweb.banner.vt.edu/ssb/prod/hzskstat.P_DispRegStatPage')
-      drop_add = reg.link_with(href: "/ssb/prod/bwskfreg.P_AddDropCrse?term_in=#{@year}#{@term}").click
+    return :closed if refresh_drop_add == :closed
 
-      # Fill in CRN Box and Submit
-      crn_entry = drop_add.form_with(action: '/ssb/prod/bwckcoms.P_Regs')
-      drop_add_html = Nokogiri::HTML(drop_add.body)
+    flag_remove_crn(remove) unless remove.empty?
 
-      unless remove.empty?
-        flag_remove_crn(drop_add_html, crn_entry, remove)
-      end
-
-      crn_entry.fields_with(id: 'crn_id1').first.value = crn
-      crn_entry['CRN_IN'] = crn
-      add = crn_entry.submit(crn_entry.button_with(value: 'Submit Changes')).body
-    rescue
-      # Does not crash if Drop/Add is not open yet
-      #   Useful if you want it to be running right when it opens
-      puts 'Drop Add not open yet'.color(:red)
-      return :closed
-    end
+    add = enter_crn(crn)
 
     if add =~ /#{crn}/ && !(add =~ /Registration Errors/)
       return true
     else
-      # If the new class is not successfully added and a class was dropped to make room, then re-adds the old class
+      # If the new class is not successfully added and a class was dropped to
+      #   make room, then re-adds the old class
       unless remove.empty?
-        crn_entry = drop_add.form_with(action: '/ssb/prod/bwckcoms.P_Regs')
-        crn_entry.fields_with(id: 'crn_id1').first.value = remove
-        crn_entry['CRN_IN'] = remove
-        add = crn_entry.submit(crn_entry.button_with(value: 'Submit Changes')).body
+        # Get a new drop/add page for re-adding
+        refresh_drop_add
+        add = enter_crn(remove)
         # If it can't re-add the old class it will then raise an exception
         if !(add =~ /#{remove}/) || add =~ /Registration Errors/
           raise 'Dropped the class, new class didn\'t register, couldn\'t re-register old class'
@@ -126,25 +108,51 @@ class HokieSPA
     end
   end
 
+  private
+
+  def refresh_drop_add
+    @drop_add = drop_add_page
+    @drop_add_html = Nokogiri::HTML(@drop_add.body)
+    @crn_entry_form = @drop_add.form_with(action: '/ssb/prod/bwckcoms.P_Regs')
+  rescue
+    # Does not crash if Drop/Add is not open yet
+    puts 'Drop Add not open yet'.color(:red)
+    return :closed
+  end
+
+  def drop_add_page
+    @agent.get('https://banweb.banner.vt.edu/ssb/prod/twbkwbis.P_GenMenu?name=bmenu.P_MainMnu')
+    reg = @agent.get('https://banweb.banner.vt.edu/ssb/prod/hzskstat.P_DispRegStatPage')
+    reg.link_with(href: "/ssb/prod/bwskfreg.P_AddDropCrse?term_in=#{@year}#{@term}").click
+  end
+
   # Flips the 'drop' box from no to yes for the desired crn
-  def flag_remove_crn(drop_add_html, crn_entry, remove)
+  def flag_remove_crn(remove)
     # Removing the old class if one was specified
     # Counter to keep track of empty rows
-    #   Starts at -2 because counter was picking up the rows 
+    #   Starts at -2 because counter was picking up the rows
     #   before the first class
     offset = -2
-    drop_add_html.css('table table tr').each_with_index do |row, i|
+    @drop_add_html.css('table table tr').each_with_index do |row, i|
       # Looks down the table to find the row with the CRN that needs to be removed
-      if row.css('td')[1] != nil
+      unless row.css('td')[1].nil?
         if row.css('td')[1].text =~ /#{remove}/
           # Changes the drop down for the 'Drop' column for the CRN
-          crn_entry.field_with(id: "action_id#{i - 3 - offset}").options[0].select
+          @crn_entry_form.field_with(id: "action_id#{i - 3 - offset}").options[0].select
         elsif row.css('td')[1].text =~ /^\d{5}$/ then
 
         else
-          offset += 1  # Counts how many 'empty' rows there are, ex. a class with additional times
+          # Counts how many 'empty' rows there are, ex. a class with additional times
+          offset += 1
         end
       end
     end
+  end
+
+  def enter_crn(crn)
+    @crn_entry_form = @drop_add.form_with(action: '/ssb/prod/bwckcoms.P_Regs')
+    @crn_entry_form.fields_with(id: 'crn_id1').first.value = crn
+    @crn_entry_form['CRN_IN'] = crn
+    @crn_entry_form.submit(@crn_entry_form.button_with(value: 'Submit Changes')).body
   end
 end
