@@ -28,17 +28,7 @@ class HokieSPA
       password: password
     })
 
-    login_result = login.submit
-
-    unless login_result.body.match(/Invalid username or password/).nil?
-      return false
-    end
-    
-    unless login_result.body.match(/Account Recovery Action Required/).nil?
-      login_result.link_with(href: /login\?service/).click
-    end
-
-    return true
+    check_login(login.submit)
   end
 
   # Gets Course Information
@@ -119,6 +109,19 @@ class HokieSPA
   end
 
   private
+
+  def check_login(login_result)
+    if !login_result.body.match(/Invalid username or password/).nil? ||
+        !login_result.body.match(/Password Expired/).nil?
+      return false
+    end
+    
+    unless login_result.body.match(/Account Recovery Action Required/).nil?
+      login_result.link_with(href: /login\?service/).click
+    end
+
+    return true
+  end
 
   def refresh_drop_add
     @drop_add = drop_add_page
