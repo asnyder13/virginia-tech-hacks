@@ -28,7 +28,17 @@ class HokieSPA
       password: password
     })
 
-    login.submit.body.match(/Invalid username or password/).nil?
+    login_result = login.submit
+
+    unless login_result.body.match(/Invalid username or password/).nil?
+      return false
+    end
+    
+    unless login_result.body.match(/Account Recovery Action Required/).nil?
+      login_result.link_with(href: /login\?service/).click
+    end
+
+    return true
   end
 
   # Gets Course Information
