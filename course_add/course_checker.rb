@@ -2,12 +2,12 @@ require_relative 'hokie_spa'
 require_relative 'colored_string'
 
 class ClassChecker
-  def initialize(n)
+  def initialize()
     @hokie_spa = HokieSPA.new
-    @name = n
   end
 
-  def login(username, password)
+  def login(username, password, n = '')
+    @name = n
     @hokie_spa.login(username, password)
   end
 
