@@ -8,6 +8,8 @@ A script which stalks the Virginia Tech classes time table and when a class beco
 
 You can now have it drop a class that you already have if the new class opens up.
 
+**This is simply a proof of concept!  Actually using it may lock you out of Drop-Add.**
+
 Blacksburg Transit (blacksburg-transit.rb)
 ------------------------------------------
 Gets the next bus stop for the Blacksburg transit given a list of pre-determined stops. 
