@@ -1,4 +1,5 @@
 #!/usr/bin/ruby
+
 require 'stringio'
 require_relative 'course_checker'
 require_relative 'colored_string'

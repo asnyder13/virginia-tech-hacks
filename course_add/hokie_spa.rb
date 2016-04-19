@@ -10,7 +10,7 @@ class HokieSPA
     @agent.redirect_ok = true
     @agent.user_agent = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_6_8) AppleWebKit/535.19 (KHTML, like Gecko) Chrome/18.0.1025.11 Safari/535.19'
     @agent.verify_mode = OpenSSL::SSL::VERIFY_NONE
-    @term = '01'
+    @term = '09'
     @year = '2016'
   end
 
