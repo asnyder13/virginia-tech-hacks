@@ -1,5 +1,6 @@
 require 'rubygems'
 require 'mechanize'
+require 'selenium-webdriver'
 require 'nokogiri'
 require 'highline/import'
 require_relative 'colored_string'
@@ -20,15 +21,36 @@ class HokieSPA
       return false
     end
 
+    sel_agent = Selenium::WebDriver.for :firefox
+    wait = Selenium::WebDriver::Wait.new(timeout: 60)
+    # Step into login page
+    sel_agent.get('https://banweb.banner.vt.edu/ssb/prod/twbkwbis.P_WWWLogin')
     # Login to the system!
-    page = @agent.get('https://auth.vt.edu/login?service=https://webapps.banner.vt.edu/banner-cas-prod/authorized/banner/SelfService')
-    login = page.forms.first
-    login.set_fields({
-      username: username,
-      password: password
-    })
+    sel_agent.find_element(:link, 'Login to HokieSpa >>>').click
+    # Input the username and passwords
+    input_user = sel_agent.find_element(:id, 'username')
+    input_pass = sel_agent.find_element(:id, 'password')
+    input_user.send_keys(username)
+    input_pass.send_keys(password)
+    # Submit form
+    sel_agent.find_element(:name, '_eventId_proceed').click
 
-    check_login(login.submit)
+    result = false
+    begin
+      wait.until { sel_agent.title.downcase.start_with?('main') }
+    rescue
+      if sel_agent.find_element(:id, 'error')
+        puts 'Invalid user or pass'
+      else
+        puts 'Login timed out (60 sec)'
+      end
+    else
+      result = true
+    ensure
+      sel_agent.quit  # Close FirefoxDriver
+    end
+
+    return result
   end
 
   # Gets Course Information
@@ -109,19 +131,6 @@ class HokieSPA
   end
 
   private
-
-  def check_login(login_result)
-    if !login_result.body.match(/Invalid username or password/).nil? ||
-        !login_result.body.match(/Password Expired/).nil?
-      return false
-    end
-    
-    unless login_result.body.match(/Account Recovery Action Required/).nil?
-      login_result.link_with(href: /login\?service/).click
-    end
-
-    return true
-  end
 
   def refresh_drop_add
     @drop_add = drop_add_page
