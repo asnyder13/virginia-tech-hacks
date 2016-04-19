@@ -45,6 +45,7 @@ class HokieSPA
         puts 'Login timed out (60 sec)'
       end
     else
+      move_cookies(sel_agent.manage.all_cookies)
       result = true
     ensure
       sel_agent.quit  # Close FirefoxDriver
@@ -131,6 +132,18 @@ class HokieSPA
   end
 
   private
+
+  def move_cookies(sel_cookies)
+    sel_cookies.each do |c|
+      if c[:expires].nil?
+        c[:expires] = (DateTime.now + (60*60*24*365)).to_s
+      else
+        c[:expires] = c[:expires].to_s
+      end
+    end
+
+    sel_cookies.each { |c| @agent.cookie_jar << Mechanize::Cookie.new(c) }
+  end
 
   def refresh_drop_add
     @drop_add = drop_add_page
