@@ -4,11 +4,11 @@ This is a collection of small scripts I've made while at Virginia Tech. Enjoy th
 
 Course Add (course-add.rb)
 --------------------------------
+**The entirety of drop-add has been revamped.  The script would need to be re-written, but I am graduating soon and would be unable to test it.**
+--------------------------------
 A script which stalks the Virginia Tech classes time table and when a class becomes available it automatically registers you for that class. Can be used to check multiple crns at once. Use at your own discretion.
 
 You can now have it drop a class that you already have if the new class opens up.
-
-**This is simply a proof of concept!  Actually using it may lock you out of Drop-Add.**
 
 Blacksburg Transit (blacksburg-transit.rb)
 ------------------------------------------

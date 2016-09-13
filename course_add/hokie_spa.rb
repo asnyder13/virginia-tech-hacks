@@ -109,7 +109,7 @@ class HokieSPA
 
     flag_remove_crn(remove) unless remove.empty?
 
-    add = enter_crn(crn)
+    add = submit_crn(crn)
 
     if add =~ /#{crn}/ && !(add =~ /Registration Errors/)
       return true
@@ -119,7 +119,7 @@ class HokieSPA
       unless remove.empty?
         # Get a new drop/add page for re-adding
         refresh_drop_add
-        add = enter_crn(remove)
+        add = submit_crn(remove)
         # If it can't re-add the old class it will then raise an exception
         if !(add =~ /#{remove}/) || add =~ /Registration Errors/
           raise 'Dropped the class, new class didn\'t register, couldn\'t re-register old class'
@@ -184,7 +184,7 @@ class HokieSPA
     end
   end
 
-  def enter_crn(crn)
+  def submit_crn(crn)
     @crn_entry_form = @drop_add.form_with(action: '/ssb/prod/bwckcoms.P_Regs')
     @crn_entry_form.fields_with(id: 'crn_id1').first.value = crn
     @crn_entry_form['CRN_IN'] = crn
